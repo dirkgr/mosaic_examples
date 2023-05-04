@@ -1,0 +1,87 @@
+FROM ubuntu:latest
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+
+# Install various softwares
+RUN apt-get update
+RUN apt-get upgrade -y
+RUN apt-get install -y \
+  python-is-python3 \
+  python3-dev \
+  libpython3-all-dev \
+  python-dev-is-python3 \
+  python3-pip \
+  build-essential \
+  git \
+  autoconf \
+  libtool \
+  llvm \
+  vim \
+  fish \
+  wget \
+  parallel \
+  s3cmd \
+  awscli \
+  htop \
+  wget \
+  fish \
+  apt-transport-https \
+  ca-certificates \
+  gnupg \
+  curl \
+  jq \
+  parallel \
+  tmux \
+  cmake
+
+# Install Google tools
+RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+RUN curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+RUN apt-get update
+RUN apt-get install google-cloud-cli
+
+# We're not installing ROCm this since we're taking the LUMI system ROCm like this:
+# module purge
+# module load CrayEnv
+# module load PrgEnv-cray/8.3.3
+# module load craype-accel-amd-gfx90a
+# module load rocm/5.2.3
+# module use /pfs/lustrep2/projappl/project_462000125/samantao-public/mymodules
+# module load aws-ofi-rccl/rocm-5.2.3
+
+# Install MPICH
+ENV MPICH_VERSION="3.1.4"
+RUN cd /opt && \
+    wget https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz && \
+    tar xf mpich-${MPICH_VERSION}.tar.gz && \
+    cd mpich-${MPICH_VERSION} && \
+    ./configure --disable-fortran --enable-fast=all,O3 --prefix=/usr && \
+    make -j install && \
+    ldconfig
+
+# Install torch
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir "torch<2.0" --extra-index-url https://download.pytorch.org/whl/rocm5.2/
+
+# Install DeepSpeed
+RUN pip install --no-cache-dir mpi4py
+RUN cd /opt && \
+    git clone https://github.com/microsoft/DeepSpeed && \
+    cd DeepSpeed && \
+    ./install.sh --allow_sudo && \
+    sed -i 's/hostname -I/hostname -s/g' /usr/local/lib/python3.10/dist-packages/deepspeed/comm/comm.py
+
+# Install more dependencies
+COPY requirements.txt requirements.txt
+COPY examples/llm/requirements.txt llm-requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt -r llm-requirements.txt
+RUN pip install --no-cache-dir py-spy
+RUN pip install --no-cache-dir wandb --upgrade
+
+# Cleanup
+RUN apt-get autoremove
+RUN rm -rf /opt/mpich-3.1.4 /opt/DeepSpeed
+RUN apt-get clean
+RUN pip cache purge
