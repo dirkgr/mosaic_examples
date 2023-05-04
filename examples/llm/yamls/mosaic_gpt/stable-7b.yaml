@@ -1,0 +1,141 @@
+lr: &lr 2.0e-4
+weight_decay: &weight_decay 2.0e-4
+
+tokenizer_name: gpt2
+max_seq_len: 2048
+global_seed: 17
+num_canonical_nodes: 256
+
+# Model
+model:
+  name: mosaic_gpt
+  init_device: meta
+  tokenizer_name: ${tokenizer_name}
+  d_model: 4096
+  n_heads: 32
+  n_layers: 32
+  mlp_ratio: 4
+  max_seq_len: ${max_seq_len}
+  vocab_size: 50368
+  attn_pdrop: 0.0
+  resid_pdrop: 0.0
+  emb_pdrop: 0.0
+  attn_impl: torch
+  loss_fn: torch_crossentropy
+  alibi: true
+  attn_clip_qkv: 5
+  # attn_qk_ln: true
+  no_bias: true
+  low_precision_layernorm: true
+  param_init_fn: kaiming_normal_
+  init_nonlinearity: relu
+
+# Tokenizer
+tokenizer:
+  name: ${tokenizer_name}
+  kwargs:
+    model_max_length: ${max_seq_len}
+
+# Dataloaders
+train_loader:
+  name: text
+  dataset:
+    local: /home/aac/shared/teams/allen-institute-for-ai/scratch/pretraining_data_mosaic/c4/
+    remote: null
+    split: train_small
+    shuffle: true
+    tokenizer_name: ${tokenizer_name}
+    max_seq_len: ${max_seq_len}
+    shuffle_seed: ${global_seed}
+    num_canonical_nodes: ${num_canonical_nodes}
+  drop_last: true
+  num_workers: 8
+
+eval_loader:
+  name: text
+  dataset:
+    local: /home/aac/shared/teams/allen-institute-for-ai/scratch/pretraining_data_mosaic/c4/
+    remote: null
+    split: val
+    shuffle: false
+    tokenizer_name: ${tokenizer_name}
+    max_seq_len: ${max_seq_len}
+    shuffle_seed: ${global_seed}
+    num_canonical_nodes: ${num_canonical_nodes}
+  drop_last: false
+  num_workers: 8
+
+# Optimization
+scheduler:
+  name: cosine_with_warmup
+  t_warmup: 0.025dur
+  alpha_f: 0.01
+
+optimizer:
+  name: decoupled_lionw
+  lr: *lr
+  betas:
+    - 0.9
+    - 0.95
+  weight_decay: *weight_decay
+
+algorithms:
+  gradient_clipping:
+    clipping_type: norm
+    clipping_threshold: 1.0
+
+global_train_batch_size: 2048  # 1024  # 2048 * seq_len = 4M tokens
+max_duration: 31950ba  # 31950ba = 63900ba / 2048 * 1024  # 63900ba # ~ 134B tokens
+eval_interval: 2500ba  # 5000ba
+eval_subset_num_batches: -1
+
+eval_first: true
+
+# System
+seed: ${global_seed}
+device_eval_batch_size: 8
+device_train_microbatch_size: 8
+# device_train_microbatch_size: auto
+precision: amp_bf16
+
+# FSDP
+fsdp_config:
+  sharding_strategy: FULL_SHARD
+  mixed_precision: PURE  # DEFAULT
+  activation_checkpointing: true
+  activation_cpu_offload: false
+  verbose: false
+  activation_checkpointing_reentrant: false
+  limit_all_gathers: true
+  state_dict_type: local  # enable sharded ckpt
+
+# Logging
+progress_bar: false
+log_to_console: true
+console_log_interval: 5ba
+
+python_log_level: DEBUG
+
+callbacks:
+  speed_monitor:
+    window_size: 10
+  runtime_estimator: {}
+  lr_monitor: {}
+  memory_monitor: {}
+  optimizer_monitor: {}
+  health_checker:
+    test_mode: true
+
+loggers:
+  wandb: {}
+
+# Checkpoint to local filesystem or remote object store
+save_interval: 1000ba
+save_folder: /datasets/teams/allen-institute-for-ai/flash/checkpoints/stable-7b
+save_num_checkpoints_to_keep: 2
+
+autoresume: true
+
+# Load from local filesystem or remote object store
+# load_path: ./gpt-3b/checkpoints/latest-rank{rank}.pt
+# load_path: ${save_folder}/latest-rank{rank}.pt
