@@ -18,7 +18,8 @@ model:
   mlp_ratio: 4
   max_seq_len: ${max_seq_len}
   vocab_size: 50368
-  attn_impl: triton
+  attn_impl: torch
+  loss_fn: torch_crossentropy
 
 # Tokenizer
 tokenizer:
