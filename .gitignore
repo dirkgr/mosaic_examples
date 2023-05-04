@@ -144,3 +144,7 @@ dmypy.json
 
 # macOS
 .DS_Store
+
+# IntelliJ
+/*.iml
+/.idea/
