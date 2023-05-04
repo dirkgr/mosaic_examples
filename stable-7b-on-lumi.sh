@@ -31,7 +31,7 @@ export FI_CXI_DISABLE_CQ_HUGETLB=1
 # We need to set this to avoid "Cassini Event Queue overflow detected." errors.
 export FI_CXI_DEFAULT_CQ_SIZE=131072
 
-#export NCCL_DEBUG=INFO
+export NCCL_DEBUG=INFO
 export PYTHONPATH=.:${PYTHONPATH}
 export WANDB_PROJECT=stable-7b
 export ROCM_PATH=/opt/rocm
