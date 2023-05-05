@@ -40,7 +40,7 @@ tokenizer:
 train_loader:
   name: text
   dataset:
-    local: /home/aac/shared/teams/allen-institute-for-ai/scratch/pretraining_data_mosaic/c4
+    local: /users/dgroeneveld/scratch_dir/pretraining_data_mosaic/c4
     #remote: null
     split: train_small
     shuffle: true
@@ -54,7 +54,7 @@ train_loader:
 eval_loader:
   name: text
   dataset:
-    local: /home/aac/shared/teams/allen-institute-for-ai/scratch/pretraining_data_mosaic/c4
+    local: /users/dgroeneveld/scratch_dir/pretraining_data_mosaic/c4
     #remote: null
     split: val
     shuffle: false
@@ -126,14 +126,14 @@ callbacks:
   health_checker:
     test_mode: true
 
-#loggers:
-#  wandb:
-#    project: stable-7b
+loggers:
+  wandb:
+    project: stable-7b
 
 # Checkpoint to local filesystem or remote object store
-save_interval: 1000ba
-save_folder: /datasets/teams/allen-institute-for-ai/flash/checkpoints/stable-7b
-save_num_checkpoints_to_keep: 2
+save_interval: 10ba
+save_folder: /users/dgroeneveld/checkpoints/stable-7b
+save_num_checkpoints_to_keep: -1
 
 autoresume: true
 
