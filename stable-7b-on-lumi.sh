@@ -56,6 +56,6 @@ srun \
     -B /usr/lib64/libcxi.so.1:/usr/lib64/libcxi.so.1 \
     -B /usr/lib64/libjson-c.so.3:/usr/lib64/libjson-c.so.3 \
     $PROJECT_DIR/containers/mosaic-lumi_latest.sif \
-    composer examples/llm/main.py examples/llm/yamls/mosaic_gpt/stable-7b.yaml \
+    python examples/llm/main.py examples/llm/yamls/mosaic_gpt/stable-7b.yaml \
       --run_name=${SLURM_JOB_ID} \
       --save_folder=${SCRATCH_DIR}/checkpoints/stable-7b
