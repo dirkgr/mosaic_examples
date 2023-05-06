@@ -10,13 +10,7 @@
 #SBATCH --mem=0			# All memory on the node
 #SBATCH --partition=small-g
 
-module purge
-module load CrayEnv
-module load PrgEnv-cray/8.3.3
-module load craype-accel-amd-gfx90a
-module load rocm/5.2.3
-module use /pfs/lustrep2/projappl/project_462000125/samantao-public/mymodules
-module load aws-ofi-rccl/rocm-5.2.3
+module load LUMI/22.08 partition/G
 
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 export MPICH_GPU_SUPPORT_ENABLED=1
@@ -39,8 +33,7 @@ export ROCM_PATH=/opt/rocm
 # Try playing with max_split_size_mb if you run into OOM errors.
 export PYTORCH_HIP_ALLOC_CONF=max_split_size_mb:512
 
-export INTERCONNECT_PATH=/pfs/lustrep2/projappl/project_462000125/samantao-public/apps-rocm-5.2.3/aws-ofi-rccl
-export SINGULARITYENV_LD_LIBRARY_PATH=/usr/local/lib:$INTERCONNECT_PATH
+export SINGULARITYENV_LD_LIBRARY_PATH=/usr/local/lib:/opt/cray/libfabric/1.15.2.0/lib64
 
 srun \
   --cpus-per-task=$SLURM_CPUS_PER_TASK \
