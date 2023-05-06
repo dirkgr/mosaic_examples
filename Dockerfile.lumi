@@ -36,7 +36,8 @@ RUN apt-get install -y \
   tmux \
   cmake \
   gdb \
-  lsof
+  lsof \
+  ninja
 
 # Install Google tools
 RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
@@ -83,7 +84,15 @@ ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 # Install torch
 RUN pip install --upgrade pip
-RUN pip install --no-cache-dir "torch<2.0" torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/rocm5.2/
+RUN apt-get install -y libmkl-dev
+RUN git clone --recursive -b v1.13.1 https://github.com/pytorch/pytorch &&
+    cd pytorch && \
+    export USE_CUDA=0 && \
+    export USE_ROCM=1 && \
+    python tools/amd_build/build_amd.py && \
+    export CMAKE_PREFIX_PATH=$(dirname $(which cmake)) && \
+    export PYTORCH_ROCM_ARCH=gfx90a && \
+    python setup.py install
 
 # Install DeepSpeed
 RUN pip install --no-cache-dir mpi4py
@@ -102,6 +111,6 @@ RUN pip install --no-cache-dir wandb --upgrade
 
 # Cleanup
 RUN apt-get autoremove
-RUN rm -rf /opt/mpich-3.1.4 /opt/aws-ofi-rccl /opt/DeepSpeed
+RUN rm -rf /opt/mpich-3.1.4 /opt/aws-ofi-rccl /opt/DeepSpeed /opt/pytorch
 RUN apt-get clean
 RUN pip cache purge
