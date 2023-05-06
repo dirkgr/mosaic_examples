@@ -95,6 +95,6 @@ RUN pip install --no-cache-dir wandb --upgrade
 
 # Cleanup
 RUN apt-get autoremove
-RUN rm -rf /opt/mpich-3.1.4 /opt/DeepSpeed
+RUN rm -rf /opt/mpich-3.1.4 /opt/aws-ofi-rccl /opt/DeepSpeed
 RUN apt-get clean
 RUN pip cache purge
